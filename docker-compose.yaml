@@ -1,0 +1,108 @@
+version: '3.8'
+
+# 自定义网络（容器间通信）
+networks:
+  jiffy-rgtest-backend-network:
+    driver: bridge
+
+# 数据卷（持久化数据，容器删除不丢失）
+volumes:
+  mysql-data:    # MySQL数据
+  redis-data:    # Redis数据
+  app-logs:      # FastAPI日志
+
+services:
+  # 1. MySQL 容器
+  mysql:
+    image: mysql:8.0  # 固定版本，避免兼容性问题
+    container_name: jiffy-rgtest-backend-mysql
+    restart: always  # 开机自启/异常重启
+    networks:
+      - jiffy-rgtest-backend-network
+    volumes:
+      # 持久化数据，防止容器删除、重启导致数据丢失
+      - mysql-data:/var/lib/mysql
+      # 主机mysql配置挂载到容器内/etc/mysql/conf.d/my.cnf
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf  # 自定义配置
+    environment:
+      # 初始化配置（替换为你的密码）
+      MYSQL_ROOT_PASSWORD: Root_123
+      MYSQL_DATABASE: rgtest_backend_db  # 自动创建数据库
+      MYSQL_USER: rgtest_backend         # 自动创建用户
+      MYSQL_PASSWORD: Admin_123
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+    ports:
+      - "3306:3306"  # 生产环境建议注释（仅容器内访问）
+    healthcheck:  # 健康检查，确保启动成功
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    deploy:  # 资源限制（根据服务器配置调整）
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+
+  # 2. Redis 容器
+  redis:
+    image: redis:7-alpine  # 轻量Alpine版本，体积小
+    container_name: jiffy-rgtest-backend-redis
+    restart: always
+    networks:
+      - jiffy-rgtest-backend-network
+    volumes:
+      - redis-data:/data  # 数据持久化
+      - ./docker/redis/redis.conf:/etc/redis/redis.conf  # 自定义配置
+    # 覆盖默认命令，使用自定义配置文件启动
+    command: redis-server /etc/redis/redis.conf
+    ports:
+      - "6379:6379"  # 生产环境建议注释
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "Admin_123", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  # 3. FastAPI 容器
+  fastapi:
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+    container_name: jiffy-rgtest-backend-fastapi
+    restart: always
+    networks:
+      - jiffy-rgtest-backend-network
+    volumes:
+      - app-logs:/var/log/backend  # 日志持久化
+      - ./config:/app/config       # 挂载配置目录
+      - ./src:/app/src             # 挂载代码目录（开发/生产通用）
+    ports:
+      - "8000:8000"  # FastAPI端口映射
+    environment:
+      # 服务配置（替换为你的密码）
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: rgtest_backend
+      DB_PASSWORD: Admin_123
+      DB_NAME: rgtest_backend_db
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: Admin_123
+      LOG_PATH: /var/log/backend
+    depends_on:
+      # 等待MySQL/Redis健康检查通过后再启动
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G

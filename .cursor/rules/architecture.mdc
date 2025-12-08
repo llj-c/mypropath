@@ -1,0 +1,31 @@
+---
+alwaysApply: true
+---
+# Python 自动化测试项目
+预期架构：
+pytest + fastapi + pydantic2.0 + pydantic_settings + playwright + httpx + pytest-html + dependency-injector + sqlalchemy + redis + asyncio
+
+
+其中dependency-injector用来解决依赖注入问it
+
+pydantic库+dataclass库负责模型的处理，不限于请求和响应模型等
+fastapi负责整个测试框架平台的API管理，可以用于触发pytest、中止、暂停、删除测试任务
+pytest负责驱动测试用例
+playwright维护UI
+httpx负责处理测试用例的API请求相关
+sqlalchemy + redis负责数据的持久化和缓存问题
+
+## 测试任务的执行
+(1) pytest触发之后在后台的一个子进程运行,如果是windows需要提供一个外部参数,允许单开一个console,这样用户可以看到运行过程打印的一些日志
+(2) 测试任务中断之后,通过钩子函数来处理中断,但是要保证正在运行的用例不受影响,只是说后面的用例不在执行,可以使用一个flag状态来标记
+(3) 暂停同样通过flag来标记,注意这个标记是在fastapi所在的框架主进程修改状态的,而pytest所在的进程只是能感知到
+(4) 当用户暂停了测试任务,可以通过类似条件变量wait这个测试任务对应run_id关联的状态来决定是否唤醒
+## 测试执行期间的日志
+(1) 测试执行期间的日志应该要保存到文件,同时测试用例运行的时候需要维护一个traceid用于跟踪流程,便于查问题,每个用例traceid不一致,在请求测试服务器的时候需要携带这个traceid，在httpx库的请求或者测试框架内部的日志输出中需要携带这个id
+(2) 如果是windows,那么还需要输出值console里面,如果允许console的话
+## 测试报告查询
+(1) 默认保留7次测试历史任务的报告
+(2) 用户可以传入run_id来查询历史测试报告
+
+## 进一步优化的点
+(1) 后期可以mysql redi部署在docker中
