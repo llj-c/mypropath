@@ -14,7 +14,6 @@ wheels/
 **/docs
 uv.lock
 *.zip
-*.env
 *.log
 **/log/**
 .env.dev.example
