@@ -76,17 +76,15 @@ services:
   fastapi:
     build:
       context: .
-      dockerfile: docker/app/Dockerfile
+      dockerfile: docker/Dockerfile
     container_name: jjiffy-attest-fastapi
     restart: always
     networks:
       - jiffy-attest
     volumes:
       - app-logs:/var/log/attest_backend  # 日志持久化
-      - ./config:/app/config       # 挂载配置目录
-      - ./src:/app/src             # 挂载代码目录（开发/生产通用）
     ports:
-      - "48080:48080"  # FastAPI端口映射
+      - "${APP_PORT}:${APP_PORT}"  # FastAPI端口映射
     environment:
       # 服务配置（替换为你的密码）
       DATABASE__MYSQL__USERNAME: "[需要替换]"
