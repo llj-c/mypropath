@@ -19,4 +19,4 @@ class FWBaseSettings(BaseSettings):
         dotenv_settings: PydanticBaseSettingsSource,
         file_secret_settings: PydanticBaseSettingsSource,
     ) -> tuple[PydanticBaseSettingsSource, ...]:
-        return dotenv_settings, init_settings, file_secret_settings
+        return env_settings, dotenv_settings, init_settings, file_secret_settings

@@ -27,6 +27,22 @@ dev = [
     "ruff>=0.1.0",
 ]
 
+# uv 配置 - 包索引镜像源
+[tool.uv]
+# 指定主镜像源 (例如: 清华大学镜像)
+index-url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+# 或者使用阿里云镜像
+# index-url = "https://mirrors.aliyun.com/pypi/simple"
+# 或者使用中科大镜像
+# index-url = "https://pypi.mirrors.ustc.edu.cn/simple"
+# 默认使用官方 PyPI
+# index-url = "https://pypi.org/simple"
+
+# 额外的索引源 (可选)
+# extra-index-url = [
+#     "https://pypi.tuna.tsinghua.edu.cn/simple",
+# ]
+
 # Ruff 配置 - 快速且现代的 Python linter 和 formatter
 [tool.ruff]
 # 目标 Python 版本

@@ -8,13 +8,19 @@ wheels/
 
 # Virtual environments
 .venv
-
+**/bin
 .ruff_cache
 .pytest_cache
+**/docs
 uv.lock
 *.zip
 *.env
 *.log
 **/log/**
 .env.dev.example
+.cursorignore
 docker-compose.dev.yml
+**/tests/**
+**/reports/**
+**/logs/**
+.env.dev

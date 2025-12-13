@@ -1,0 +1,85 @@
+[mysqld]
+# 基本配置
+# 注意: 此端口是 MySQL 在容器内监听的端口
+# 如果修改此端口, docker-compose.yaml 中的端口映射也需要相应修改
+# 例如: 如果改为 port = 3307, 则 docker-compose.yaml 中应改为 "43306:3307"
+# port = 3306
+# 生产环境建议: 如果只允许本地访问, 改为 127.0.0.1; 如果允许特定IP, 使用防火墙规则
+bind-address = 127.0.0.1
+datadir = /var/lib/mysql
+socket = /var/run/mysqld/mysqld.sock
+pid-file = /var/run/mysqld/mysqld.pid
+
+# 字符集配置
+character-set-server = utf8mb4
+collation-server = utf8mb4_unicode_ci
+init_connect = 'SET NAMES utf8mb4'
+
+# 时区配置
+default-time-zone = '+08:00'
+
+# 日志配置
+log-error = /var/log/mysql/error.log
+slow-query-log = 1
+slow-query-log-file = /var/log/mysql/slow-query.log
+long-query-time = 2
+general-log = 0
+general-log-file = /var/log/mysql/general.log
+
+# 性能优化配置
+# 生产环境建议: 根据实际并发连接数调整, 一般设置为 500-1000
+max_connections = 200
+max_connect_errors = 10000
+table-open-cache = 2000
+thread-cache-size = 50
+# 注意: MySQL 8.0 已移除查询缓存, 如果使用 8.0+ 请删除这两行
+query-cache-type = 1
+query-cache-size = 64M
+tmp-table-size = 64M
+max-heap-table-size = 64M
+
+# InnoDB 配置
+# 生产环境必须调整: 建议设置为服务器物理内存的 50-70%, 例如 8GB 内存设置为 4-5G
+innodb-buffer-pool-size = 1G
+innodb-log-file-size = 256M
+innodb-log-buffer-size = 16M
+# 生产环境建议: 改为 1 以保证数据安全 (性能会略有下降, 但数据更安全)
+# 1 = 每次事务提交都写入磁盘 (最安全)
+# 2 = 每秒写入磁盘 (平衡)
+# 0 = 每秒写入一次, 不等待刷新 (最快但不安全)
+innodb-flush-log-at-trx-commit = 2
+innodb-file-per-table = 1
+innodb-flush-method = O_DIRECT
+
+# 二进制日志配置
+log-bin = mysql-bin
+binlog-format = ROW
+# 生产环境建议: 根据备份策略调整, 一般保留 7-30 天
+expire-logs-days = 7
+max-binlog-size = 100M
+# 生产环境建议: 如果使用主从复制, 添加以下配置
+# server-id = 1
+# log-slave-updates = 1
+# binlog-do-db = your_database_name
+
+# SQL 模式
+sql-mode = STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
+
+# 其他配置
+lower-case-table-names = 0
+# 生产环境建议: 如果涉及大文件上传, 可能需要增加到 128M 或更大
+max-allowed-packet = 64M
+wait-timeout = 28800
+interactive-timeout = 28800
+# 生产环境建议: 添加以下安全配置
+# skip-name-resolve = 1  # 跳过DNS解析, 提高性能
+# skip-external-locking = 1  # 跳过外部锁定
+# event-scheduler = ON  # 如果需要定时任务
+
+[mysql]
+default-character-set = utf8mb4
+
+[client]
+default-character-set = utf8mb4
+port = 3306
+socket = /var/run/mysqld/mysqld.sock
