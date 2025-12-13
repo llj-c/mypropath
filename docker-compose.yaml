@@ -25,15 +25,15 @@ services:
       - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf  # 自定义配置
     environment:
       # 初始化配置（替换为你的密码）
-      MYSQL_ROOT_PASSWORD: "[需要替换]"
-      MYSQL_DATABASE: "[需要替换]"  # 自动创建数据库
-      MYSQL_USER: "[需要替换]"         # 自动创建用户
-      MYSQL_PASSWORD: 123456
+      MYSQL_ROOT_PASSWORD: "${DATABASE__MYSQL__ROOT_PASSWORD}"
+      MYSQL_DATABASE: "${DATABASE__MYSQL__DATABASE}"  # 自动创建数据库
+      MYSQL_USER: "${DATABASE__MYSQL__USERNAME}"         # 自动创建用户
+      MYSQL_PASSWORD: "${DATABASE__MYSQL__PASSWORD}"
       MYSQL_CHARACTER_SET_SERVER: utf8mb4
     ports:
       - "43306:3306"  # 生产环境建议注释（仅容器内访问）
     healthcheck:  # 健康检查，确保启动成功
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DATABASE__MYSQL__USERNAME}", "-p${DATABASE__MYSQL__PASSWORD}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -55,14 +55,14 @@ services:
       - ./docker/redis/redis.conf:/etc/redis/redis.conf  # 自定义配置
     environment:
       # Redis 密码配置（替换为你的密码）
-      REDIS_PASSWORD: "[需要替换成redis的密码]"
+      REDIS_PASSWORD: "${DATABASE__REDIS__PASSWORD}"
     # 覆盖默认命令，使用自定义配置文件启动，并通过命令行参数设置密码
     command: >
-      sh -c "redis-server /etc/redis/redis.conf --requirepass $${REDIS_PASSWORD}"
+      sh -c "redis-server /etc/redis/redis.conf --requirepass ${DATABASE__REDIS__PASSWORD}"
     ports:
       - "46379:6379"  # 生产环境建议注释
     healthcheck:
-      test: ["CMD", "sh", "-c", "redis-cli -a $${REDIS_PASSWORD} ping"]
+      test: ["CMD", "sh", "-c", "redis-cli -a ${DATABASE__REDIS__PASSWORD} ping"]
       interval: 3s
       timeout: 3s
       retries: 5
@@ -86,10 +86,13 @@ services:
     ports:
       - "${APP_PORT}:${APP_PORT}"  # FastAPI端口映射
     environment:
+      # 应用配置
+      APP_PORT: "${APP_PORT}"
+      APP_HOST: "${APP_HOST}"
       # 服务配置（替换为你的密码）
-      DATABASE__MYSQL__USERNAME: "[需要替换]"
-      DATABASE__MYSQL__PASSWORD: "[需要替换]"
-      DATABASE__MYSQL__DATABASE: "[需要替换]"
+      DATABASE__MYSQL__USERNAME: "${DATABASE__MYSQL__USERNAME}"
+      DATABASE__MYSQL__PASSWORD: "${DATABASE__MYSQL__PASSWORD}"
+      DATABASE__MYSQL__DATABASE: "${DATABASE__MYSQL__DATABASE}"
     depends_on:
       # 等待MySQL/Redis健康检查通过后再启动
       mysql:
