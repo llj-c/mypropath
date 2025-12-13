@@ -1,9 +1,10 @@
-from .api_config import ApiConfig
-from .db_config import DatabaseConfig
+
+from framework.config.api_config import ApiConfig
+from framework.config.db_config import DatabaseConfig
+from framework.config.fw_base_settings import FWBaseSettings
 
 
-class FWConfig:
+class FWConfig(FWBaseSettings):
 
-    def __init__(self):
-        self.api_config = ApiConfig()  # type: ignore
-        self.db_config = DatabaseConfig()  # type: ignore
+    api: ApiConfig
+    database: DatabaseConfig
