@@ -16,3 +16,5 @@ uv.lock
 *.env
 *.log
 **/log/**
+.env.dev.example
+docker-compose.dev.yml
