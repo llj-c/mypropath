@@ -29,3 +29,13 @@ sqlalchemy + redis负责数据的持久化和缓存问题
 
 ## 进一步优化的点
 (1) 后期可以mysql redi部署在docker中
+
+## docstring的字符
+(1) 始终使用英文字符的括号\(\)、冒号(:)、问号(?)
+(2) 符号之后有一个空格再衔接后续的字符
+
+
+## python.typing
+类型声明使用Python3.10以上版本的typing
+也就是说无需使用Optional[str], 而是直接使用str|None
+类似的还有Dict List 可以直接使用dict list,还有其他类型的也遵循新的规定
