@@ -78,22 +78,14 @@ services:
       context: .
       dockerfile: docker/Dockerfile
     container_name: jjiffy-attest-fastapi
-    restart: always
+    restart: no
     networks:
       - jiffy-attest
     volumes:
       - app-logs:/app/logs  # 日志持久化
       - ./:/app
       # 排除敏感文件
-      - /dev/null:/app/.env
       - /dev/null:/app/.env.dev
-      - /dev/null:/app/.env.dev.example
-      - /dev/null:/app/.env.prod
-      - /dev/null:/app/.env.prod.example
-      - /dev/null:/app/.env.test
-      - /dev/null:/app/.env.test.example
-      - /dev/null:/app/.env.local
-      - /dev/null:/app/.env.local.example
       - empty-volume:/app/docs
 
     ports:
