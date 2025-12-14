@@ -1,32 +1,25 @@
 # 基础镜像
-FROM python:3.11-slim
+FROM python:3.11-slim AS base
+
+# 安装uv的最小系统依赖（官方要求）
+RUN apt-get update && apt-get install -y --no-install-recommends \   
+    ca-certificates
+    && rm -rf /var/lib/apt/lists/*  # 清理缓存，减小镜像体积
+
+# 升级pip + 安装指定版本uv
+ENV UV_VERSION=0.9.10
+ENV PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip install --no-cache-dir --upgrade pip  -i ${PIP_INDEX_URL}\
+    && pip install --no-cache-dir uv==${UV_VERSION} -i ${PIP_INDEX_URL}
+
+
+# 验证uv安装（可选，排错用）
+RUN uv --version
 
 # 设置工作目录
 WORKDIR /app
-
-# 定义构建时参数（ARG - 仅在构建时可用）
-ARG PYTHON_VERSION=3.11
-ARG BUILD_DATE
-ARG VCS_REF
-
-# 定义运行时环境变量（ENV - 在容器运行时可用）
-# ENV PYTHONUNBUFFERED=1 \
-#     PYTHONDONTWRITEBYTECODE=1 \
-#     APP_PORT=${APP_PORT} \
-#     APP_HOST=${APP_HOST} \
-#     RELOAD=False
-
-# 安装依赖（先复制requirements，利用Docker缓存）
-# COPY requirements.txt .
-
-# 复制项目代码（排除敏感文件，通过.gitignore）
+COPY uv.lock* pyproject.toml ./
+RUN uv sync --no-dev --no-install-project
 COPY . .
-RUN pip install --upgrade pip && \
-    pip install uv && \
-    uv sync
 
-
-# 暴露端口（使用环境变量，默认48080）
-# EXPOSE ${APP_PORT}
-
-CMD ["python", "main.py"]
+CMD ["uv", "run", "main.py"]

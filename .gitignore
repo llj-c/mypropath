@@ -12,7 +12,6 @@ wheels/
 .ruff_cache
 .pytest_cache
 **/docs
-uv.lock
 *.zip
 *.log
 **/log/**
