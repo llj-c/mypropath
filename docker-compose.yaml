@@ -94,7 +94,7 @@ services:
       - ./dev/null:/app/.env.test.example
       - ./dev/null:/app/.env.local
       - ./dev/null:/app/.env.local.example
-      - empty-volumn:/app/docs
+      - empty-volume:/app/docs
 
     ports:
       - "${APP_PORT}:${APP_PORT}"  # FastAPI端口映射
