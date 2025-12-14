@@ -82,7 +82,7 @@ services:
     networks:
       - jiffy-attest
     volumes:
-      - app-logs:/var/log/attest_backend  # 日志持久化
+      - app-logs:/app/logs  # 日志持久化
     ports:
       - "${APP_PORT}:${APP_PORT}"  # FastAPI端口映射
     environment:

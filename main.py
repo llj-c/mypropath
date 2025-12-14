@@ -6,6 +6,7 @@ import uvicorn
 from contextlib import asynccontextmanager
 from framework.config import FWConfig
 from framework.containers.app_container import AppContainer
+from framework.frame_logger import frame_logger
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -19,6 +20,7 @@ app = FastAPI()
 
 @app.get("/")
 def index():
+    frame_logger.info("get index success")
     return {
         "hello world"
     }

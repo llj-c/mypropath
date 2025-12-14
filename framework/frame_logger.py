@@ -8,7 +8,7 @@ class FrameLogger:
 
     def _init_framework_logger(self) -> logging.Logger:
         # 1. 获取框架日志器（统一挂载 Handler，子 logger 透传即可）
-        logger = logging.getLogger("framework")
+        logger = logging.getLogger("m")
         logger.setLevel(logging.DEBUG)
         logger.propagate = False  # 继续向 root 透传，让 pytest 聚合
         framework_log_file = Path("logs/framework.log")
