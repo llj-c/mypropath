@@ -89,11 +89,11 @@ services:
       - /dev/null:/app/.env.dev
       - /dev/null:/app/.env.dev.example
       - /dev/null:/app/.env.prod
-      - ./dev/null:/app/.env.prod.example
-      - ./dev/null:/app/.env.test
-      - ./dev/null:/app/.env.test.example
-      - ./dev/null:/app/.env.local
-      - ./dev/null:/app/.env.local.example
+      - /dev/null:/app/.env.prod.example
+      - /dev/null:/app/.env.test
+      - /dev/null:/app/.env.test.example
+      - /dev/null:/app/.env.local
+      - /dev/null:/app/.env.local.example
       - empty-volume:/app/docs
 
     ports:
