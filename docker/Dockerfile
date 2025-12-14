@@ -3,7 +3,7 @@ FROM python:3.11-slim AS base
 
 # 安装uv的最小系统依赖（官方要求）
 RUN apt-get update && apt-get install -y --no-install-recommends \   
-    ca-certificates
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*  # 清理缓存，减小镜像体积
 
 # 升级pip + 安装指定版本uv
