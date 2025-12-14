@@ -1,0 +1,8 @@
+.cursor
+.ruff_cache
+.venv/
+docs/
+.git/
+.gitignore
+.env.dev
+.logs/
