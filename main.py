@@ -1,13 +1,14 @@
 
 
 from dependency_injector.wiring import Provide, inject
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 import uvicorn
 from contextlib import asynccontextmanager
 from framework.common.db_manager import DBManager
 from framework.config import FWConfig
 from framework.containers.app_container import AppContainer
 from framework.frame_logger import frame_logger
+from sqlalchemy import text
 
 
 @asynccontextmanager
@@ -34,7 +35,7 @@ def index():
 
 @app.get("/db-test")
 @inject
-def db_test(db_manager: DBManager = Provide[AppContainer.db_manager]):
+def db_test(db_manager: DBManager = Depends(Provide[AppContainer.db_manager])):
     """
     数据库连接测试示例.
 
@@ -42,8 +43,9 @@ def db_test(db_manager: DBManager = Provide[AppContainer.db_manager]):
     """
     with db_manager.session_scope() as session:
         # 使用 session 进行数据库操作
-        # 例如: result = session.execute(text("SELECT 1"))
-        return {"status": "success", "message": "数据库连接正常"}
+        stmt = text("SELECT now()")
+        result = session.execute(stmt)
+        return {"status": "success", "message": result.scalar()}
 
 
 @inject
