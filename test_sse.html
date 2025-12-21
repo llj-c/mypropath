@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSE 测试页面</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 28px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-start:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-stop {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-stop:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .status {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status.idle {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        .output {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 300px;
+            max-height: 500px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .message {
+            margin-bottom: 12px;
+            padding: 10px;
+            background: white;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .message.message-type {
+            border-left-color: #667eea;
+        }
+
+        .message.toolsCalling-type {
+            border-left-color: #ffc107;
+            background: #fffbf0;
+        }
+
+        .message.toolsFinished-type {
+            border-left-color: #28a745;
+            background: #f0fff4;
+        }
+
+        .message.done-type {
+            border-left-color: #17a2b8;
+            background: #e7f3f5;
+        }
+
+        .message.error-type {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .message.toolsCalling-type .message-header {
+            color: #ffc107;
+        }
+
+        .message.toolsFinished-type .message-header {
+            color: #28a745;
+        }
+
+        .message.done-type .message-header {
+            color: #17a2b8;
+        }
+
+        .message.error-type .message-header {
+            color: #dc3545;
+        }
+
+        .message-content {
+            color: #333;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .message-time {
+            font-size: 12px;
+            color: #999;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .clear-btn {
+            background: #6c757d;
+            color: white;
+            margin-top: 15px;
+            width: 100%;
+        }
+
+        .clear-btn:hover:not(:disabled) {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SSE 流式数据测试</h1>
+        
+        <div class="button-group">
+            <button id="startBtn" class="btn-start" onclick="startSSE()">开始接收</button>
+            <button id="stopBtn" class="btn-stop" onclick="stopSSE()" disabled>停止接收</button>
+        </div>
+
+        <div id="status" class="status idle">状态: 未连接</div>
+
+        <div class="output" id="output"></div>
+        
+        <button class="clear-btn" onclick="clearOutput()">清空输出</button>
+    </div>
+
+    <script>
+        let eventSource = null;
+        let isNormalEnd = false;  // 标记是否是正常结束
+        const outputDiv = document.getElementById('output');
+        const statusDiv = document.getElementById('status');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+
+        function updateStatus(status, text) {
+            statusDiv.className = `status ${status}`;
+            statusDiv.textContent = `状态: ${text}`;
+        }
+
+        function addMessage(data, eventType = 'message') {
+            const messageDiv = document.createElement('div');
+            // 根据事件类型添加不同的样式类
+            let typeClass = 'message-type';
+            if (eventType === 'toolsCalling') {
+                typeClass = 'toolsCalling-type';
+            } else if (eventType === 'toolsFinished') {
+                typeClass = 'toolsFinished-type';
+            } else if (eventType === 'done') {
+                typeClass = 'done-type';
+            } else if (eventType === 'error') {
+                typeClass = 'error-type';
+            }
+            messageDiv.className = `message ${typeClass}`;
+            
+            const time = new Date().toLocaleTimeString('zh-CN');
+            const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
+            
+            messageDiv.innerHTML = `
+                <div class="message-header">
+                    <span>事件类型: ${eventType}</span>
+                    <span class="message-time">${time}</span>
+                </div>
+                <div class="message-content">${JSON.stringify(parsedData, null, 2)}</div>
+            `;
+            
+            outputDiv.appendChild(messageDiv);
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+        }
+
+        function startSSE() {
+            if (eventSource) {
+                return;
+            }
+
+            // 重置标志
+            isNormalEnd = false;
+
+            // 根据你的服务器地址调整
+            const url = 'http://localhost:48050/test-sse';
+            
+            eventSource = new EventSource(url);
+            
+            updateStatus('connected', '已连接');
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+
+            eventSource.addEventListener('message', function(event) {
+                addMessage(event.data, 'message');
+            });
+
+            eventSource.addEventListener('open', function(event) {
+                addMessage({ info: 'SSE 连接已建立' }, 'open');
+            });
+
+            // 监听 toolsCalling 事件
+            eventSource.addEventListener('toolsCalling', function(event) {
+                addMessage(event.data, 'toolsCalling');
+            });
+
+            // 监听 toolsFinished 事件
+            eventSource.addEventListener('toolsFinished', function(event) {
+                addMessage(event.data, 'toolsFinished');
+            });
+
+            // 监听服务器发送的结束事件
+            eventSource.addEventListener('done', function(event) {
+                addMessage(event.data, 'done');
+                // 标记为正常结束
+                isNormalEnd = true;
+                // 立即关闭连接, 避免触发 error 事件
+                if (eventSource) {
+                    eventSource.close();
+                    eventSource = null;
+                    updateStatus('idle', '数据流已完成');
+                    startBtn.disabled = false;
+                    stopBtn.disabled = true;
+                }
+            });
+
+            eventSource.addEventListener('error', function(event) {
+                // 如果是正常结束, 不显示错误
+                if (isNormalEnd) {
+                    return;
+                }
+                
+                // 只有在连接真正出错时才显示错误
+                if (eventSource.readyState === EventSource.CLOSED) {
+                    updateStatus('disconnected', '连接已关闭');
+                    addMessage({ error: 'SSE 连接意外关闭' }, 'error');
+                    eventSource = null;
+                    startBtn.disabled = false;
+                    stopBtn.disabled = true;
+                } else {
+                    updateStatus('disconnected', '连接错误');
+                    addMessage({ error: 'SSE 连接错误' }, 'error');
+                }
+            });
+
+            // 监听自定义事件类型（如果有）
+            eventSource.addEventListener('custom', function(event) {
+                addMessage(event.data, 'custom');
+            });
+        }
+
+        function stopSSE() {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+                updateStatus('idle', '已断开');
+                addMessage({ info: '用户主动断开连接' }, 'close');
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+            }
+        }
+
+        function clearOutput() {
+            outputDiv.innerHTML = '';
+        }
+
+        // 页面关闭时自动断开连接
+        window.addEventListener('beforeunload', function() {
+            if (eventSource) {
+                eventSource.close();
+            }
+        });
+    </script>
+</body>
+</html>
